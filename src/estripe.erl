@@ -4,6 +4,7 @@
 -export([update_customer/2]).
 -export([get_customer/1]).
 -export([update_subscription/2]).
+-export([delete_subscription/2]).
 
 -export([customer_id/1]).
 
@@ -53,6 +54,18 @@ update_subscription(CustomerId, Params) ->
     Res = lhttpc:request(
         "https://api.stripe.com/v1/customers/" ++ binary_to_list(CustomerId) ++ "/subscription",
         "POST",
+        [authorization()],
+        Body,
+        5000
+    ),
+    {ok, {{200, _}, _, Json}} = Res,
+    {ok, #subscription{obj = jiffy:decode(Json)}}.
+
+delete_subscription(CustomerId, Params) ->
+    Body = form_urlencode(Params),
+    Res = lhttpc:request(
+        "https://api.stripe.com/v1/customers/" ++ binary_to_list(CustomerId) ++ "/subscription",
+        "DELETE",
         [authorization()],
         Body,
         5000
