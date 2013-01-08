@@ -8,6 +8,7 @@
 
 -export([customer_id/1]).
 -export([active_card/1]).
+-export([subscription/1]).
 
 -record(customer, {obj}).
 -record(subscription, {obj}).
@@ -79,6 +80,9 @@ customer_id(#customer{obj = Obj}) ->
 
 active_card(#customer{obj = Obj}) ->
     get_json_value([<<"active_card">>], Obj).
+
+subscription(#customer{obj = Obj}) ->
+    get_json_value([<<"subscription">>], Obj).
 
 form_urlencode(Proplist) ->
     form_urlencode(Proplist, []).
