@@ -7,6 +7,7 @@
 -export([cancel_subscription/2]).
 
 -export([customer_id/1]).
+-export([active_card/1]).
 
 -record(customer, {obj}).
 -record(subscription, {obj}).
@@ -76,6 +77,9 @@ cancel_subscription(CustomerId, Params) ->
 customer_id(#customer{obj = Obj}) ->
     get_json_value([<<"id">>], Obj).
 
+active_card(#customer{obj = Obj}) ->
+    get_json_value([<<"active_card">>], Obj).
+
 form_urlencode(Proplist) ->
     form_urlencode(Proplist, []).
 
@@ -93,9 +97,9 @@ esc(S) -> http_uri:encode(S).
 get_json_value([], Obj) ->
     Obj;
 get_json_value([Key | Rest], {Obj}) ->
-    get_json_value(Rest, proplists:get_value(Key, Obj, []));
+    get_json_value(Rest, proplists:get_value(Key, Obj));
 get_json_value([Index | _Rest], []) when is_integer(Index) ->
-    [];
+    undefined;
 get_json_value([Index | Rest], Obj) when is_integer(Index), is_list(Obj) ->
     get_json_value(Rest, lists:nth(Index + 1, Obj));
 get_json_value([Key | Rest], Obj) when is_list(Obj) ->
