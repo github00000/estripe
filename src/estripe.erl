@@ -2,6 +2,7 @@
 
 -export([create_customer/1]).
 -export([update_customer/2]).
+-export([delete_customer/1]).
 -export([get_customer/1]).
 -export([update_subscription/2]).
 -export([cancel_subscription/2]).
@@ -36,6 +37,16 @@ update_customer(CustomerId, Params) when is_binary(CustomerId) ->
         "POST",
         [authorization()],
         Body,
+        5000
+    ),
+    {ok, {{200, _}, _, Json}} = Res,
+    {ok, #customer{obj = jiffy:decode(Json)}}.
+
+delete_customer(CustomerId) when is_binary(CustomerId) ->
+    Res = lhttpc:request(
+        "https://api.stripe.com/v1/customers/" ++ binary_to_list(CustomerId),
+        "DELETE",
+        [authorization()],
         5000
     ),
     {ok, {{200, _}, _, Json}} = Res,
