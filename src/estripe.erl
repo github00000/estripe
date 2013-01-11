@@ -115,7 +115,12 @@ charges(CustomerId, Offset, Acc) ->
 
 last_charge(CustomerId) ->
     {ok, Charges} = charges(CustomerId),
-    lists:last(Charges).
+    case Charges of
+        [] ->
+            no_charges;
+        Charges ->
+            {ok, lists:last(Charges)}
+    end.
 
 customer_id(#customer{obj = Obj}) ->
     get_json_value([<<"id">>], Obj).
