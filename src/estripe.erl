@@ -15,7 +15,6 @@
 
 -record(customer, {obj}).
 -record(subscription, {obj}).
--record(charge, {obj}).
 
 authorization() ->
     {ok, SK} = application:get_env(estripe, stripe_key),
@@ -105,7 +104,7 @@ charges(CustomerId, Offset, Acc) ->
         5000
     ),
     {ok, {{200, _}, _, Json}} = Res,
-    Charges = [#charge{obj = Charge} || Charge <- get_json_value([<<"data">>], jiffy:decode(Json))],
+    Charges = get_json_value([<<"data">>], jiffy:decode(Json)),
     case Charges of
         [] ->
             {ok, Acc};
