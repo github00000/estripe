@@ -7,11 +7,12 @@
 -export([update_subscription/2]).
 -export([cancel_subscription/2]).
 
+-export([last_charge/1]).
+-export([issue_refund/2]).
+
 -export([customer_id/1]).
 -export([active_card/1]).
 -export([subscription/1]).
-
--export([last_charge/1]).
 
 -record(customer, {obj}).
 -record(subscription, {obj}).
@@ -120,6 +121,20 @@ last_charge(CustomerId) ->
         Charges ->
             {ok, lists:last(Charges)}
     end.
+
+issue_refund(ChargeId, RefundAmount) ->
+    Body = form_urlencode([
+        {<<"amount">>, RefundAmount}
+    ]),
+    Res = lhttpc:request(
+        "https://api.stripe.com/v1/charges/" ++ binary_to_list(ChargeId) ++ "/refund",
+        "POST",
+        [authorization()],
+        Body,
+        5000
+    ),
+    {ok, {{200, _}, _, Json}} = Res,
+    {ok, jiffy:decode(Json)}.
 
 customer_id(#customer{obj = Obj}) ->
     get_json_value([<<"id">>], Obj).
