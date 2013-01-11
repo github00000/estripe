@@ -8,6 +8,6 @@
                   stdlib,
                   lhttpc
                  ]},
-  {mod, { estripe_app, []}},
+  {mod, {estripe_app, []}},
   {env, []}
  ]}.

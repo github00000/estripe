@@ -11,8 +11,11 @@
 -export([active_card/1]).
 -export([subscription/1]).
 
+-export([last_charge/1]).
+
 -record(customer, {obj}).
 -record(subscription, {obj}).
+-record(charge, {obj}).
 
 authorization() ->
     {ok, SK} = application:get_env(estripe, stripe_key),
@@ -86,6 +89,34 @@ cancel_subscription(CustomerId, Params) ->
     {ok, {{200, _}, _, Json}} = Res,
     {ok, #subscription{obj = jiffy:decode(Json)}}.
 
+charges(CustomerId) ->
+    charges(CustomerId, 0, []).
+
+charges(CustomerId, Offset, Acc) ->
+    Params = binary_to_list(form_urlencode([
+        {<<"customer">>, CustomerId},
+        {<<"count">>, 100},
+        {<<"offset">>, Offset}
+    ])),
+    Res = lhttpc:request(
+        "https://api.stripe.com/v1/charges?" ++ Params,
+        "GET",
+        [authorization()],
+        5000
+    ),
+    {ok, {{200, _}, _, Json}} = Res,
+    Charges = [#charge{obj = Charge} || Charge <- get_json_value([<<"data">>], jiffy:decode(Json))],
+    case Charges of
+        [] ->
+            {ok, Acc};
+        Charges ->
+            charges(CustomerId, Offset + 100, Acc ++ Charges)
+    end.
+
+last_charge(CustomerId) ->
+    {ok, Charges} = charges(CustomerId),
+    lists:last(Charges).
+
 customer_id(#customer{obj = Obj}) ->
     get_json_value([<<"id">>], Obj).
 
@@ -100,6 +131,12 @@ form_urlencode(Proplist) ->
 
 form_urlencode([], Acc) ->
     list_to_binary(string:join(lists:reverse(Acc), "&"));
+
+form_urlencode([{Key, Value} | R], Acc) when is_binary(Key), is_integer(Value) ->
+    form_urlencode([{binary_to_list(Key), integer_to_list(Value)} | R], Acc);
+
+form_urlencode([{Key, Value} | R], Acc) when is_list(Key), is_integer(Value) ->
+    form_urlencode([{Key, integer_to_list(Value)} | R], Acc);
 
 form_urlencode([{Key, Value} | R], Acc) when is_binary(Key), is_binary(Value) ->
     form_urlencode([{binary_to_list(Key), binary_to_list(Value)} | R], Acc);
