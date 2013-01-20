@@ -1,2 +1,2 @@
-estripe
-=======
+Erlang Stripe Bindings
+======================
