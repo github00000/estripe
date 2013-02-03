@@ -17,6 +17,8 @@
 -record(customer, {obj}).
 -record(subscription, {obj}).
 
+-define(HTTP_TIMEOUT, 10000).
+
 authorization() ->
     {ok, SK} = application:get_env(estripe, stripe_key),
     {<<"Authorization">>, <<"Bearer ", SK/binary>>}.
@@ -28,7 +30,7 @@ create_customer(Params) ->
         "POST",
         [authorization()],
         Body,
-        5000
+        ?HTTP_TIMEOUT
     ),
     {ok, {{200, _}, _, Json}} = Res,
     {ok, #customer{obj = jiffy:decode(Json)}}.
@@ -40,7 +42,7 @@ update_customer(CustomerId, Params) when is_binary(CustomerId) ->
         "POST",
         [authorization()],
         Body,
-        5000
+        ?HTTP_TIMEOUT
     ),
     {ok, {{200, _}, _, Json}} = Res,
     {ok, #customer{obj = jiffy:decode(Json)}}.
@@ -50,7 +52,7 @@ delete_customer(CustomerId) when is_binary(CustomerId) ->
         "https://api.stripe.com/v1/customers/" ++ binary_to_list(CustomerId),
         "DELETE",
         [authorization()],
-        5000
+        ?HTTP_TIMEOUT
     ),
     {ok, {{200, _}, _, Json}} = Res,
     {ok, #customer{obj = jiffy:decode(Json)}}.
@@ -60,7 +62,7 @@ get_customer(CustomerId) when is_binary(CustomerId) ->
         "https://api.stripe.com/v1/customers/" ++ binary_to_list(CustomerId),
         "GET",
         [authorization()],
-        5000
+        ?HTTP_TIMEOUT
     ),
     {ok, {{200, _}, _, Json}} = Res,
     {ok, #customer{obj = jiffy:decode(Json)}}.
@@ -72,7 +74,7 @@ update_subscription(CustomerId, Params) ->
         "POST",
         [authorization()],
         Body,
-        5000
+        ?HTTP_TIMEOUT
     ),
     {ok, {{200, _}, _, Json}} = Res,
     {ok, #subscription{obj = jiffy:decode(Json)}}.
@@ -84,7 +86,7 @@ cancel_subscription(CustomerId, Params) ->
         "DELETE",
         [authorization()],
         Body,
-        5000
+        ?HTTP_TIMEOUT
     ),
     {ok, {{200, _}, _, Json}} = Res,
     {ok, #subscription{obj = jiffy:decode(Json)}}.
@@ -102,7 +104,7 @@ charges(CustomerId, Offset, Acc) ->
         "https://api.stripe.com/v1/charges?" ++ Params,
         "GET",
         [authorization()],
-        5000
+        ?HTTP_TIMEOUT
     ),
     {ok, {{200, _}, _, Json}} = Res,
     Charges = get_json_value([<<"data">>], jiffy:decode(Json)),
@@ -131,7 +133,7 @@ issue_refund(ChargeId, RefundAmount) ->
         "POST",
         [authorization()],
         Body,
-        5000
+        ?HTTP_TIMEOUT
     ),
     {ok, {{200, _}, _, Json}} = Res,
     {ok, jiffy:decode(Json)}.
@@ -165,6 +167,8 @@ form_urlencode([{Key, Value} | R], Acc) when is_list(Key), is_list(Value) ->
 
 esc(S) -> http_uri:encode(S).
 
+get_json_value(_, undefined) ->
+    undefined;
 get_json_value([], Obj) ->
     Obj;
 get_json_value([Key | Rest], {Obj}) ->
